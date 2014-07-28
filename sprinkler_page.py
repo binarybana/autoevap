@@ -46,6 +46,7 @@ class SprinklerControl(object):
             <input type="hidden" name="action" value="off" />
               <button type="submit" class="button">SPRINKLER OFF</button>
             </form>
+            <p>Sprinkler is currently: """+ ('ON' if self.status else 'OFF') + """</p>
           </body>
         </html>"""
 
