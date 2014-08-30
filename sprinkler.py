@@ -17,6 +17,9 @@ def run_sprinkler(db, duration):
     print(data)
     db.write_points(data)
 
+rundur = 60
+restdur = 60*10
+
 if __name__=='__main__':
     db = influxdb.InfluxDBClient(host='raspberrypi', database='hvac')
     setup()
@@ -24,10 +27,11 @@ if __name__=='__main__':
 
         now = datetime.datetime.now()
         print("It is now {}, checking time bounds:".format(now))
-        if now.hour > 10 and now.hour < 18 and now.day % 2 == 0:
-            print("Running for 120 seconds!")
-            run_sprinkler(db, 120)
+        if now.hour > 10 and now.hour < 19 and now.day % 2 == 0:
+            print("Running for {} seconds!".format(rundur))
+            run_sprinkler(db, rundur)
+            time.sleep(restdur-rundur)
         else:
-            print("Not running, waiting for 30 minutes.")
-        time.sleep(60*30)
+            print("Not running, waiting for {} minutes.".format(restdur/60))
+            time.sleep(restdur)
 
