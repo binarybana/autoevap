@@ -1,11 +1,8 @@
 import json
-
 import pandas as pa
-import pylab as p
-import matplotlib.dates as dates
 
 from influxdb import client as influxdb
-from pytz import timezone
+from ggplot import *
 
 db = influxdb.InfluxDBClient(host='raspberrypi', database='hvac')
 
@@ -22,7 +19,6 @@ def dfquery(db, query):
     rm_col(df, 'time')
     rm_col(df, 'sequence_number')
     return df
-
 
 def ptemps(db, when, ax):
     temps = dfquery(db,'select * from dstemps {}'.format(when))
@@ -56,33 +52,23 @@ def psprink(db, when, ax):
                 linewidth=3,
                 color='k')
 
-def pwunder(db, when, ax):
+def pwunder(db, when):
     wunder = dfquery(db,'select data from wunderground {}'.format(when))
     wunderparse = wunder.data.map(lambda x: json.loads(x)['current_observation'])
     wex = wunderparse.iloc[0]
     wall = pa.DataFrame.from_dict(wunderparse.to_dict()).T
+    wall.index.name = 'date'
+    wall = wall.reset_index()
 
-    wall.temp_f.plot(ax=ax[0], label='Wunderground', linewidth=2)
-    return wall
-    wall.solarradiation.plot(ax=ax[0], label='Wunderground', linewidth=2)
+    g = ggplot(wall, aes('date','temp_f')) + geom_line()
+    print g
+    print ggplot(wall, aes('date','solarradiation')) + geom_line()
+    return g,wall
 
-when = ' where time > now() - 7h'
-
-fig, ax = p.subplots(nrows=1, sharex=True)
-ax = [ax]
-tz = timezone("US/Central")
-#ax.xaxis.set_minor_locator(dates.WeekdayLocator(byweekday=(1),
-ax[0].xaxis.set_major_formatter(dates.DateFormatter('%b-%d\n%X', tz=tz))
-#ax.xaxis.set_minor_formatter(dates.DateFormatter('%d\n%a'))
-ax[0].xaxis.grid(True)
-ax[0].yaxis.grid()
-#ax.xaxis.set_major_locator(dates.MonthLocator())
-#ax.xaxis.set_major_formatter(dates.DateFormatter('\n\n\n%b\n%Y'))
+when = ' where time > now() - 16h'
 
 #ptemps(db, when, ax)
 #ptstat(db, when, ax)
 #psprink(db, when, ax)
-wall = pwunder(db, when, ax)
-p.legend(loc='best')
-p.tight_layout()
-p.show()
+g,wall = pwunder(db, when)
+
